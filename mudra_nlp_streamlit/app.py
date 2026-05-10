@@ -9,7 +9,8 @@ import os
 # -----------------------------
 st.set_page_config(
     page_title="Bharatanatyam Mudra Predictor",
-    page_icon="🪷"
+    page_icon="🪷",
+    layout="centered"
 )
 
 # -----------------------------
@@ -30,14 +31,24 @@ Describe a Bharatanatyam hand gesture in <b>any language</b> to predict its mudr
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# 📂 Load Dataset
+# 📂 Dataset Path Fix
 # -----------------------------
-data = pd.read_csv("dataset.csv")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+dataset_path = os.path.join(
+    BASE_DIR,
+    "dataset.csv"
+)
+
+# Load Dataset
+data = pd.read_csv(dataset_path)
 
 # -----------------------------
 # 🌍 Mudra Name Translation
 # -----------------------------
 mudra_names_translation = {
+
+    # Asamyutha Hastas
     "Pataka": {"kn": "ಪತಾಕ", "hi": "पताका", "ta": "பதாகா"},
     "Tripataka": {"kn": "ತ್ರಿಪತಾಕ", "hi": "त्रिपताका", "ta": "திரிபதாகா"},
     "Ardhapataka": {"kn": "ಅರ್ಧಪತಾಕ", "hi": "अर्धपताका", "ta": "அர்த்தபதாகா"},
@@ -54,6 +65,7 @@ mudra_names_translation = {
     "Alapadma": {"kn": "ಅಲಪದ್ಮ", "hi": "अलपद्म", "ta": "அலபத்மா"},
     "Katakamukha": {"kn": "ಕಟಕಮುಖ", "hi": "कटकमुख", "ta": "கடகமுகா"},
 
+    # Samyutha Hastas
     "Anjali": {"kn": "ಅಂಜಲಿ", "hi": "अंजलि", "ta": "அஞ்சலி"},
     "Kapota": {"kn": "ಕಪೋಟ", "hi": "कपोत", "ta": "கபோதா"},
     "Karkata": {"kn": "ಕರ್ಕಟ", "hi": "कर्कट", "ta": "கர்கடா"},
@@ -103,13 +115,16 @@ user_input = st.text_input(
 if st.button("Predict Mudra"):
 
     if user_input.strip() == "":
-        st.warning("⚠️ Please enter a description.")
+        st.warning(
+            "⚠️ Please enter a description."
+        )
 
     else:
-        # Predict mudra
+
+        # Predict Mudra
         result = predict_mudra(user_input)
 
-        # Get translated mudra name
+        # Translate Mudra Name
         if result in mudra_names_translation:
             translated_name = (
                 mudra_names_translation[result]
@@ -118,13 +133,13 @@ if st.button("Predict Mudra"):
         else:
             translated_name = result
 
-        # Success message
+        # Show Prediction
         st.success(
             f"✨ Predicted Mudra: {translated_name}"
         )
 
         # -----------------------------
-        # Get details from dataset
+        # Get Mudra Details from Dataset
         # -----------------------------
         mudra_data = (
             data[data["mudra"] == result]
@@ -133,10 +148,13 @@ if st.button("Predict Mudra"):
 
         mudra_type = mudra_data["type"]
         mudra_meaning = mudra_data["meaning"]
-        mudra_meaning = mudra_meaning.replace(" ", ", ")
-        image_path = mudra_data["image"]
 
-        # Translate details
+        # Add commas to meaning
+        mudra_meaning = (
+            mudra_meaning.replace(" ", ", ")
+        )
+
+        # Translate Details
         translated_type = translate_text(
             mudra_type,
             lang_option
@@ -148,19 +166,33 @@ if st.button("Predict Mudra"):
         )
 
         # -----------------------------
-        # Mudra Details
+        # Expandable Details
         # -----------------------------
-        with st.expander("📌 Mudra Details"):
+        with st.expander(
+            "📌 Mudra Details"
+        ):
             st.write(
                 f"**Type:** {translated_type}"
             )
+
             st.write(
                 f"**Meaning:** {translated_meaning}"
             )
 
         # -----------------------------
-        # Display Image
+        # Image Path Fix
         # -----------------------------
+        image_file = os.path.basename(
+            mudra_data["image"]
+        )
+
+        image_path = os.path.join(
+            BASE_DIR,
+            "images",
+            image_file
+        )
+
+        # Show Image
         if os.path.exists(image_path):
 
             st.image(
